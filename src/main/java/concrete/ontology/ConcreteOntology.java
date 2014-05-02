@@ -34,6 +34,7 @@ public class ConcreteOntology {
   protected final String defaultNamespace;
   
   protected final Set<String> commTypes;
+  protected final Set<String> sectionTypes;
   
   /**
    * 
@@ -52,19 +53,33 @@ public class ConcreteOntology {
     
     this.defaultNamespace = this.model.getNsPrefixURI("");
     this.commTypes = new HashSet<String>();
+    this.sectionTypes = new HashSet<>();
   }
   
   public final Set<String> getValidCommunicationTypes() {
-    if (this.commTypes.size() == 0) {
-      OntClass oc = this.model.getOntClass(this.toURI("Communication"));
+    if (this.commTypes.size() == 0)
+      this.commTypes.addAll(this.loadViaOntology("Communication"));
+      
+    return new HashSet<>(this.commTypes);
+  }
+  
+  public final Set<String> getValidSectionTypes() {
+    if (this.sectionTypes.size() == 0)
+      this.sectionTypes.addAll(this.loadViaOntology("Section"));
+    
+    return new HashSet<>(this.sectionTypes);
+  }
+  
+  private Set<String> loadViaOntology(String ontString) {
+    Set<String> toLoadInto = new HashSet<>();  
+    OntClass oc = this.model.getOntClass(this.toURI(ontString));
       ExtendedIterator<OntClass> ei = oc.listSubClasses(false);
       while (ei.hasNext()) {
         OntClass occ = ei.next();
-        this.commTypes.add(occ.getLocalName());
+        toLoadInto.add(occ.getLocalName());
       }
-    }
-      
-    return new HashSet<>(this.commTypes);
+    
+    return toLoadInto;
   }
 
   public static final String toURI(QName qn) {
@@ -85,8 +100,11 @@ public class ConcreteOntology {
   
   public static void main (String... args) {
     ConcreteOntology co = new ConcreteOntology();
+    logger.info("Communication Types:");
     for (String s : co.getValidCommunicationTypes())
       logger.info(s);
-      // System.out.println(s);
+    logger.info("Section Types:");
+    for (String s : co.getValidSectionTypes())
+      logger.info(s);
   }
 }
